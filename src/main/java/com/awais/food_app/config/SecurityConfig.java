@@ -42,13 +42,15 @@ public class SecurityConfig {
         return new ProviderManager(authProvider);
     }
 
-    // CORS - Open for testing
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("*")); // Open for all origins (temporary testing)
+        config.setAllowedOrigins(List.of(
+                "https://tasty-bites-liard.vercel.app",
+                "https://tasty-bites-admin-panel.vercel.app"
+        ));
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS","PATCH"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of("*")); // Accept all headers
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -63,11 +65,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // API endpoints open for frontend
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/orders/all",
                                 "/api/orders/status/**",
-                                "/api/food/**"
+                                "/api/food/**" // <-- match frontend endpoint
                         ).permitAll()
                         .requestMatchers("/api/cart/**").authenticated()
                         .anyRequest().authenticated()
