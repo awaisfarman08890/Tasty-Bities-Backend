@@ -72,8 +72,8 @@ public class OrderServiceImpl implements OrderService {
                     SessionCreateParams.builder()
                             .addAllLineItem(lineItems)
                             .setMode(SessionCreateParams.Mode.PAYMENT)
-                            .setSuccessUrl("http://localhost:5173/checkout-success?success=true&session_id={CHECKOUT_SESSION_ID}")
-                            .setCancelUrl("http://localhost:5173/cart?canceled=true")
+                            .setSuccessUrl("https://tasty-bities.netlify.app/checkout-success?success=true&session_id={CHECKOUT_SESSION_ID}")
+                            .setCancelUrl("https://tasty-bities.netlify.app/cart?canceled=true")
                             .build()
             );
 
