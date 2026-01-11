@@ -46,8 +46,8 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
-                "https://tasty-bites-liard.vercel.app",
-                "https://tasty-bites-admin-panel.vercel.app"
+                "https://tasty-bites-frontend-sable.vercel.app",
+                "https://tasty-bites-five.vercel.app"
         ));
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS","PATCH"));
         config.setAllowedHeaders(List.of("*")); // Accept all headers
