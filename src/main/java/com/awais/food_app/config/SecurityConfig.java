@@ -52,7 +52,10 @@ public class SecurityConfig {
         // Netlify frontends (exact origin, no trailing slash)
         config.setAllowedOrigins(List.of(
                 "https://tasty-bities.netlify.app",
-                "https://luminous-gelato-befbf8.netlify.app"
+                "https://luminous-gelato-befbf8.netlify.app",
+                "http://localhost:5173/",
+                "http://localhost:5174/"
+
         ));
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS","PATCH"));
         config.setAllowedHeaders(List.of("Authorization","Content-Type"));
