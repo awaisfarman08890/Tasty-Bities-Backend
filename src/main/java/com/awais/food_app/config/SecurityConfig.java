@@ -42,17 +42,13 @@ public class SecurityConfig {
         return new ProviderManager(authProvider);
     }
 
+    // CORS - Open for testing
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
-                "https://tasty-bities.netlify.app",
-                "https://luminous-gelato-befbf8.netlify.app",
-                "http://localhost:5173",
-                "http://localhost:5174"
-        ));
+        config.setAllowedOrigins(List.of("*")); // Open for all origins (temporary testing)
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS","PATCH"));
-        config.setAllowedHeaders(List.of("*")); // Accept all headers
+        config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -67,12 +63,11 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // API endpoints open for frontend
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/orders/all",
                                 "/api/orders/status/**",
-                                "/api/food/**" // <-- match frontend endpoint
+                                "/api/food/**"
                         ).permitAll()
                         .requestMatchers("/api/cart/**").authenticated()
                         .anyRequest().authenticated()
