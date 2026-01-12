@@ -72,8 +72,8 @@ public class OrderServiceImpl implements OrderService {
                     SessionCreateParams.builder()
                             .addAllLineItem(lineItems)
                             .setMode(SessionCreateParams.Mode.PAYMENT)
-                            .setSuccessUrl("https://tasty-bities.netlify.app/checkout-success?success=true&session_id={CHECKOUT_SESSION_ID}")
-                            .setCancelUrl("https://tasty-bities.netlify.app/cart?canceled=true")
+                            .setSuccessUrl("https://tasty-bites-frontend-sable.vercel.app/checkout-success?success=true&session_id={CHECKOUT_SESSION_ID}")
+                            .setCancelUrl("https://tasty-bites-frontend-sable.vercel.app/cart?canceled=true")
                             .build()
             );
 
