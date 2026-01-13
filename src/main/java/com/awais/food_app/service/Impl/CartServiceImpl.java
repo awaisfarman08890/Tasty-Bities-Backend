@@ -26,29 +26,34 @@ public class CartServiceImpl implements CartService {
     public CartResponse addToCart(CartRequest request) {
         String loggedInUserId = getCurrentUserId();
 
-        Optional<CartEntity> cartEntityOptional = cartRepository.findByUserId(loggedInUserId);
-        CartEntity cartEntity = cartEntityOptional.orElseGet(() -> new CartEntity(loggedInUserId, new HashMap<>()));
+        // Always fetch the single cart for the user
+        CartEntity cartEntity = cartRepository.findByUserId(loggedInUserId)
+                .orElseGet(() -> new CartEntity(loggedInUserId, new HashMap<>()));
 
         Map<String, Integer> items = cartEntity.getItems();
         items.put(request.getFoodId(), items.getOrDefault(request.getFoodId(), 0) + 1);
         cartEntity.setItems(items);
+
+        // Remove any accidental duplicate carts for the user
+        cartRepository.findAllByUserId(loggedInUserId).stream()
+                .filter(c -> !c.getId().equals(cartEntity.getId()))
+                .forEach(cartRepository::delete);
 
         CartEntity save = cartRepository.save(cartEntity);
         return convertToCartResponse(save);
     }
 
     @Override
-    public CartResponse getCart(String userId) {
+    public CartResponse getCart(String ignored) {
         String loggedInUserId = getCurrentUserId();
         CartEntity cartEntity = cartRepository.findByUserId(loggedInUserId)
-                .orElse(new CartEntity(null, loggedInUserId, new HashMap<>()));
+                .orElse(new CartEntity(loggedInUserId, new HashMap<>()));
 
         return convertToCartResponse(cartEntity);
     }
 
     @Override
     public void clearCart(String ignored) {
-        // ignore argument, always use logged-in user
         String loggedInUserId = getCurrentUserId();
         cartRepository.deleteByUserId(loggedInUserId);
     }
@@ -79,7 +84,7 @@ public class CartServiceImpl implements CartService {
         if (auth == null || !auth.isAuthenticated()) {
             throw new RuntimeException("User not authenticated");
         }
-        return auth.getName(); // make sure this returns user's ID
+        return auth.getName();
     }
 
     private CartResponse convertToCartResponse(CartEntity cartEntity) {
