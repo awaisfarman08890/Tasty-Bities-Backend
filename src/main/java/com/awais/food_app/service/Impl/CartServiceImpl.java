@@ -5,7 +5,6 @@ import com.awais.food_app.io.CartRequest;
 import com.awais.food_app.io.CartResponse;
 import com.awais.food_app.repository.CartRepository;
 import com.awais.food_app.service.CartService;
-import com.awais.food_app.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,77 +18,86 @@ import java.util.Map;
 public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
-    private final UserService userService;
 
     @Override
     public CartResponse addToCart(CartRequest request) {
-        String loggedInUserId = getCurrentUserId();
+        String userId = getCurrentUserId();
 
-        // Fetch single cart or create new
-        CartEntity cartEntity = cartRepository.findByUserId(loggedInUserId)
-                .orElseGet(() -> new CartEntity(loggedInUserId, new HashMap<>()));
+        CartEntity cart = cartRepository.findByUserId(userId)
+                .orElse(
+                        CartEntity.builder()
+                                .userId(userId)
+                                .items(new HashMap<>())
+                                .build()
+                );
 
-        Map<String, Integer> items = cartEntity.getItems();
-        if (items == null) items = new HashMap<>();
-
+        Map<String, Integer> items = cart.getItems();
         items.put(request.getFoodId(), items.getOrDefault(request.getFoodId(), 0) + 1);
-        cartEntity.setItems(items);
 
-        // Remove any accidental duplicate carts
-        cartRepository.findAllByUserId(loggedInUserId).stream()
-                .filter(c -> !c.getId().equals(cartEntity.getId()))
-                .forEach(cartRepository::delete);
+        cart.setItems(items);
+        CartEntity saved = cartRepository.save(cart);
 
-        CartEntity saved = cartRepository.save(cartEntity);
-        return convertToCartResponse(saved);
+        return toResponse(saved);
     }
 
     @Override
-    public CartResponse getCart(String ignored) {
-        String loggedInUserId = getCurrentUserId();
-        CartEntity cartEntity = cartRepository.findByUserId(loggedInUserId)
-                .orElse(new CartEntity(loggedInUserId, new HashMap<>()));
+    public CartResponse getCart() {
+        String userId = getCurrentUserId();
 
-        return convertToCartResponse(cartEntity);
+        CartEntity cart = cartRepository.findByUserId(userId)
+                .orElse(
+                        CartEntity.builder()
+                                .userId(userId)
+                                .items(new HashMap<>())
+                                .build()
+                );
+
+        return toResponse(cart);
     }
 
     @Override
-    public void clearCart(String ignored) {
-        String loggedInUserId = getCurrentUserId();
-        cartRepository.deleteByUserId(loggedInUserId);
-    }
+    public CartResponse removeFromCart(CartRequest request) {
+        String userId = getCurrentUserId();
 
-    @Override
-    public CartResponse removeFromCart(CartRequest request, String ignored) {
-        String loggedInUserId = getCurrentUserId();
-
-        CartEntity entity = cartRepository.findByUserId(loggedInUserId)
+        CartEntity cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Cart not found"));
 
-        Map<String, Integer> items = entity.getItems();
-        if (items != null && items.containsKey(request.getFoodId())) {
+        Map<String, Integer> items = cart.getItems();
+
+        if (items.containsKey(request.getFoodId())) {
             int qty = items.get(request.getFoodId());
-            if (qty > 1) items.put(request.getFoodId(), qty - 1);
-            else items.remove(request.getFoodId());
+            if (qty > 1) {
+                items.put(request.getFoodId(), qty - 1);
+            } else {
+                items.remove(request.getFoodId());
+            }
         }
 
-        CartEntity saved = cartRepository.save(entity);
-        return convertToCartResponse(saved);
+        CartEntity saved = cartRepository.save(cart);
+        return toResponse(saved);
     }
+
+    @Override
+    public void clearCart() {
+        String userId = getCurrentUserId();
+        cartRepository.deleteByUserId(userId);
+    }
+
+    // ================== HELPERS ==================
 
     private String getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             throw new RuntimeException("User not authenticated");
         }
-        return auth.getName();
+        return auth.getName(); // email
     }
 
-    private CartResponse convertToCartResponse(CartEntity cartEntity) {
+    private CartResponse toResponse(CartEntity entity) {
         return CartResponse.builder()
-                .id(cartEntity.getId())
-                .userId(cartEntity.getUserId())
-                .items(cartEntity.getItems())
+                .id(entity.getId())
+                .userId(entity.getUserId())
+                .items(entity.getItems())
                 .build();
     }
 }

@@ -3,13 +3,11 @@ package com.awais.food_app.repository;
 import com.awais.food_app.entity.CartEntity;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface CartRepository extends MongoRepository<CartEntity, String> {
-    Optional<CartEntity> findByUserId(String userId);
 
-    List<CartEntity> findAllByUserId(String userId);
+    Optional<CartEntity> findByUserId(String userId);
 
     void deleteByUserId(String userId);
 }
