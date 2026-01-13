@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,21 +25,23 @@ public class CartServiceImpl implements CartService {
     public CartResponse addToCart(CartRequest request) {
         String loggedInUserId = getCurrentUserId();
 
-        // Always fetch the single cart for the user
+        // Fetch single cart or create new
         CartEntity cartEntity = cartRepository.findByUserId(loggedInUserId)
                 .orElseGet(() -> new CartEntity(loggedInUserId, new HashMap<>()));
 
         Map<String, Integer> items = cartEntity.getItems();
+        if (items == null) items = new HashMap<>();
+
         items.put(request.getFoodId(), items.getOrDefault(request.getFoodId(), 0) + 1);
         cartEntity.setItems(items);
 
-        // Remove any accidental duplicate carts for the user
+        // Remove any accidental duplicate carts
         cartRepository.findAllByUserId(loggedInUserId).stream()
                 .filter(c -> !c.getId().equals(cartEntity.getId()))
                 .forEach(cartRepository::delete);
 
-        CartEntity save = cartRepository.save(cartEntity);
-        return convertToCartResponse(save);
+        CartEntity saved = cartRepository.save(cartEntity);
+        return convertToCartResponse(saved);
     }
 
     @Override
@@ -59,24 +60,21 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartResponse removeFromCart(CartRequest cartRequest, String ignored) {
+    public CartResponse removeFromCart(CartRequest request, String ignored) {
         String loggedInUserId = getCurrentUserId();
 
         CartEntity entity = cartRepository.findByUserId(loggedInUserId)
                 .orElseThrow(() -> new RuntimeException("Cart not found"));
 
-        Map<String, Integer> cartItems = entity.getItems();
-        if (cartItems.containsKey(cartRequest.getFoodId())) {
-            Integer currentQty = cartItems.get(cartRequest.getFoodId());
-            if (currentQty > 1) {
-                cartItems.put(cartRequest.getFoodId(), currentQty - 1);
-            } else {
-                cartItems.remove(cartRequest.getFoodId());
-            }
+        Map<String, Integer> items = entity.getItems();
+        if (items != null && items.containsKey(request.getFoodId())) {
+            int qty = items.get(request.getFoodId());
+            if (qty > 1) items.put(request.getFoodId(), qty - 1);
+            else items.remove(request.getFoodId());
         }
 
-        CartEntity saveEntity = cartRepository.save(entity);
-        return convertToCartResponse(saveEntity);
+        CartEntity saved = cartRepository.save(entity);
+        return convertToCartResponse(saved);
     }
 
     private String getCurrentUserId() {
