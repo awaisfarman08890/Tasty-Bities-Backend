@@ -3,6 +3,7 @@ package com.awais.food_app.config;
 import com.awais.food_app.filters.JwtAuthenticationFilter;
 import com.awais.food_app.service.Impl.AppUserDetailsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,6 +27,10 @@ import java.util.List;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    @Value("${admin.domain}")
+    private String adminDomain;
+    @Value("${admin.domain.Two}")
+    private String adminDomain2;
 
     private final AppUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -50,7 +55,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
-                "https://tasty-bites-five.vercel.app",
+                 adminDomain,
+                adminDomain2,
                 "https://tasty-bites-frontend-sable.vercel.app"
         ));
         config.setAllowedMethods(List.of(
